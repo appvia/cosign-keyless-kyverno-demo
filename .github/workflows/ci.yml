@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - 'main'
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2.4.0
+
+      - name: Create kind cluster
+        uses: helm/kind-action@2a525709fd0874b75d7ae842d257981b0e0f557d
+        timeout-minutes: 5
+        with: 
+          kubectl_version: v1.22.2
+          cluster_name: kind
+
+      - name: Install kyverno
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kyverno/kyverno/main/config/release/install.yaml
+          kubectl wait --for=condition=available --timeout=600s  -n kyverno deployment/kyverno
+
+      - name: Apply our cluster policy
+        run: kubectl apply -f test/ClusterPolicy.yaml
+
+      - name: Deploy known bad issuer pod
+        run: "! kubectl apply -f test/BadIssuer.yaml"
+
+      - name: Deploy known bad subject pod
+        run: "! kubectl apply -f test/BadSubject.yaml"
+
+      - name: Deploy known good pod
+        run: kubectl apply -f test/GoodMixed.yaml

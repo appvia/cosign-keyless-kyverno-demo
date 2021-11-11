@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: default
+  annotations:
+    issuer.cosign.sigstore.dev/demo: bad
+    issuer.cosign.sigstore.dev/demoagain: https://token.actions.githubusercontent.com
+  name: badissuer
+spec:
+  containers:
+    - image: ghcr.io/chrisns/cosign-keyless-demo:latest
+      name: demo
+    - image: ghcr.io/chrisns/cosign-keyless-demo:latest
+      name: demoagain
